@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debt Recovery Optimization</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            background-color: #f4f4f4; 
+            margin: 0; 
+            padding: 20px;
+            color: #333; 
+        }
+        h1, h2 { 
+            color: #1a73e8; 
+        }
+        form { 
+            background: #fff; 
+            padding: 20px; 
+            border-radius: 5px; 
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); 
+            margin-bottom: 20px;
+        }
+        input, select, button { 
+            display: block; 
+            width: 100%; 
+            margin: 10px 0; 
+            padding: 10px; 
+            font-size: 16px; 
+            border: 1px solid #ccc; 
+            border-radius: 5px;
+        }
+        button { 
+            background-color: #1a73e8; 
+            color: white; 
+            border: none; 
+            cursor: pointer;
+        }
+        button:hover { 
+            background-color: #1666c1; 
+        }
+        #result, #batchResult, #nlpResult { 
+            margin-top: 20px; 
+            padding: 20px; 
+            background: #fff; 
+            border-radius: 5px; 
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); 
+        }
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <h1>Debt Recovery Optimization</h1>
+    
+    <h2>Single Customer Optimization</h2>
+    <form id="singleCustomerForm" method="post" action="{{ url_for('optimize') }}">
+        <label for="customer_no">Customer ID:</label>
+        <input type="number" name="customer_id" id="customer_no"     required>
+        <label for="customer_no">Debt Amount:</label>
+        <input type="number" name="debt_amount" id="debt_amount" required>
+        <label for="customer_no">Days Overdue:</label>
+        <input type="number" name="days_overdue" id="days_overdue"  required>
+        <label for="customer_no">Credit Score:</label>
+        <input type="number" name="credit_score" id="credit_score"  required>
+        <label for="customer_no">Age:</label>
+        <input type="number" name="age" id="age"  required>
+        <label for="customer_no">Income:</label>
+        <input type="number" name="income" id="income" required>
+        <label for="customer_no">Number Of Previous Loan:</label>
+        <input type="number" name="num_previous_loans" id="num_previous_loans"  required>
+        <label for="customer_no">Number of Previous Defaults:</label>
+        <input type="number" name="num_previous_defaults" id="num_previous_defaults" required>
+        <label for="customer_no">Communication:</label>
+        <select id="communication_preference" name="communication_preference" required>
+            <option value="0">Preferred Communication: Email</option>
+            <option value="1">Preferred Communication: Phone</option>
+            <option value="2">Preferred Communication: Mail</option>
+        </select>
+        <label for="customer_no">Last Contact Date:</label>
+        <input type="text" id="last_contact_date" name="last_contact_date"  required>
+        <button type="submit">Optimize Recovery Strategy</button>
+    </form>
+    <div id="result"></div>
+
+    <h2>Batch Recovery Optimization</h2>
+    <form id="batchForm">
+        <input type="file" id="batchFile" accept=".csv" required>
+        <button type="submit">Optimize Batch Recovery</button>
+    </form>
+    <div id="batchResult"></div>
+
+    <h2>Communication Analysis</h2>
+    <button id="analyzeComms">Analyze Customer Communications</button>
+    <div id="nlpResult"></div>
+
+    <script>
+        // Initialize Flatpickr on the last contact date input
+        flatpickr("#last_contact_date", {
+            dateFormat: "Y-m-d",
+            altInput: true,
+            altFormat: "F j, Y",
+            maxDate: "today"
+        });
+    </script>
+</body>
+</html>
+
+
+    <!-- <script>
+        document.getElementById('singleCustomerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = Object.fromEntries(new FormData(e.target));
+            const response = await axios.post('/optimize', data);
+            document.getElementById('result').innerHTML = `
+                <p>Recommended Strategy: ${response.data.recommended_strategy}</p>
+                <p>Payment Probability: ${response.data.payment_probability.toFixed(2)}</p>
+            `;
+        });
+
+        document.getElementById('batchForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append('file', document.getElementById('batchFile').files[0]);
+            const response = await axios.post('/batch_optimize', formData);
+            const strategies = response.data.map(item => item.recommended_strategy);
+            const strategyCounts = strategies.reduce((acc, strategy) => {
+                acc[strategy] = (acc[strategy] || 0) + 1;
+                return acc;
+            }, {});
+            
+            const ctx = document.createElement('canvas');
+            document.getElementById('batchResult').innerHTML = '';
+            document.getElementById('batchResult').appendChild(ctx);
+            
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(strategyCounts),
+                    datasets: [{
+                        data: Object.values(strategyCounts),
+                        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    title: {
+                        display: true,
+                        text: 'Distribution of Recommended Strategies'
+                    }
+                }
+            });
+        });
+
+        document.getElementById('analyzeComms').addEventListener('click', async () => {
+            const response = await axios.post('/analyze_communications', {});
+            const nlpResult = document.getElementById('nlpResult');
+            nlpResult.innerHTML = '<h3>Sentiment Analysis</h3>';
+            
+            const sentiments = response.data.results.map(item => item.sentiment);
+            const ctx = document.createElement('canvas');
+            nlpResult.appendChild(ctx);
+            
+            new Chart(ctx, {
+                type: 'histogram',
+                data: {
+                    datasets: [{
+                        label: 'Sentiment Distribution',
+                        data: sentiments
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            nlpResult.innerHTML += '<h3>Key Phrases</h3>';
+            nlpResult.innerHTML += response.data.results.map(item => `<p>${item.key_phrases}</p>`).join('');
+
+            nlpResult.innerHTML += '<h3>Topics</h3>';
+            nlpResult.innerHTML += response.data.topics.map(topic => `<p>${topic}</p>`).join('');
+        });
+    </script> -->
+<!-- </body>
+</html> -->
